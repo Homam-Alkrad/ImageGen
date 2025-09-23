@@ -1,0 +1,1586 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>محرر نصوص مع معادلات - محدث</title>
+  <script src="https://cdn.jsdelivr.net/npm/mathjs@11.10.0/lib/browser/math.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Times New Roman", serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background: #fff;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    label {
+      font-weight: bold;
+      color: #555;
+      display: block;
+      margin-bottom: 8px;
+      font-size: clamp(16px, 2.5vw, 18px);
+    }
+
+    textarea, select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e1e5e9;
+      border-radius: 10px;
+      font-size: clamp(16px, 2.5vw, 18px);
+      margin-bottom: 15px;
+      transition: border-color 0.3s;
+      font-family: "Times New Roman", serif;
+      direction: rtl;
+      text-align: right;
+    }
+
+    .equation-input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e1e5e9;
+      border-radius: 10px;
+      font-size: clamp(16px, 2.5vw, 18px);
+      margin-bottom: 15px;
+      transition: border-color 0.3s;
+      font-family: "Courier New", monospace;
+      direction: ltr !important;
+      text-align: left !important;
+      background: #f8f9ff;
+    }
+
+    textarea:focus, select:focus, .equation-input:focus {
+      border-color: #3b82f6;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .equations {
+      margin: 20px 0;
+    }
+
+    .equation-group {
+      background: #f8f9ff;
+      padding: 15px;
+      border-radius: 10px;
+      border-right: 4px solid #3b82f6;
+      margin-bottom: 15px;
+      position: relative;
+    }
+
+    .equation-type-control {
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .equation-type-control input[type="checkbox"] {
+      transform: scale(1.2);
+    }
+
+    .equation-label {
+      font-size: clamp(14px, 2vw, 16px);
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .remove-equation {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 25px;
+      height: 25px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s;
+    }
+
+    .remove-equation:hover {
+      background: #dc2626;
+    }
+
+    .add-equation-controls {
+      margin: 15px 0;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .text-formatting {
+      background: #fef7ff;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 15px;
+      margin: 15px 0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .formatting-content {
+      display: none;
+    }
+
+    .formatting-content.active {
+      display: block;
+    }
+
+    .formatting-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      direction: ltr;
+      margin-bottom: 10px;
+    }
+
+    .format-btn {
+      min-width: 45px;
+      height: 36px;
+      padding: 6px 10px;
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #334155;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .format-btn:hover {
+      background: #8b5cf6;
+      color: white;
+      border-color: #8b5cf6;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
+    }
+
+    .format-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(139, 92, 246, 0.2);
+    }
+
+    .format-btn.bold {
+      font-weight: 900;
+    }
+
+    .format-btn.red {
+      color: #dc2626;
+    }
+
+    .format-btn.red:hover {
+      background: #dc2626;
+      color: white;
+    }
+
+    .format-btn.underline {
+      text-decoration: underline;
+    }
+
+    .options-section {
+      margin: 20px 0;
+      padding: 20px;
+      background: #f0f9ff;
+      border-radius: 10px;
+      border-right: 4px solid #10b981;
+    }
+
+    .source-section {
+      margin: 20px 0;
+      padding: 20px;
+      background: #fff7ed;
+      border-radius: 10px;
+      border-right: 4px solid #f59e0b;
+    }
+
+    .options-controls {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .source-controls {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .options-layout, .color-controls {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .options-layout label, .color-controls label {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: normal;
+      cursor: pointer;
+    }
+
+    .options-layout input[type="radio"], .color-controls input[type="radio"] {
+      margin: 0;
+    }
+
+    .source-container {
+      margin-top: 15px;
+    }
+
+    .source-image-controls {
+      margin-top: 15px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-right: 3px solid #f59e0b;
+    }
+
+    .source-image-controls label {
+      font-weight: bold;
+      color: #555;
+      display: block;
+      margin-bottom: 10px;
+      font-size: clamp(14px, 2vw, 16px);
+    }
+
+    .source-type-options {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .source-type-options label {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: normal;
+      cursor: pointer;
+      font-size: clamp(13px, 2vw, 15px);
+    }
+
+    .source-type-options input[type="radio"] {
+      margin: 0;
+    }
+
+    .option-input, .source-input {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e1e5e9;
+      border-radius: 8px;
+      font-size: clamp(14px, 2vw, 16px);
+      margin-bottom: 10px;
+      direction: ltr;
+      text-align: left;
+      font-family: "Courier New", monospace;
+      background: #f8f9ff;
+    }
+
+    .source-input {
+      direction: rtl;
+      text-align: right;
+      font-family: "Times New Roman", serif;
+      background: #fffbf0;
+    }
+
+    .option-group {
+      background: #f0f4ff;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      border-right: 3px solid #3b82f6;
+    }
+
+    .option-type-control {
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .option-type-control input[type="checkbox"] {
+      transform: scale(1.1);
+    }
+
+    .buttons {
+      margin: 20px 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px;
+    }
+
+    button {
+      padding: 12px 16px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: clamp(14px, 2vw, 17px);
+      font-weight: bold;
+      color: #fff;
+      background: #3b82f6;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    button:hover {
+      background: #2563eb;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    button.clear {
+      background: #ef4444;
+      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+    }
+
+    button.clear:hover {
+      background: #dc2626;
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+    }
+
+    button.add {
+      background: #10b981;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+
+    button.add:hover {
+      background: #059669;
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    button.download {
+      background: #9333ea;
+      box-shadow: 0 4px 15px rgba(147, 51, 234, 0.3);
+    }
+
+    button.download:hover {
+      background: #7c3aed;
+      box-shadow: 0 6px 20px rgba(147, 51, 234, 0.4);
+    }
+
+    button.options {
+      background: #f59e0b;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+
+    button.options:hover {
+      background: #d97706;
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+    }
+
+    button.source {
+      background: #f59e0b;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+
+    button.source:hover {
+      background: #d97706;
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+    }
+
+    button.newline {
+      background: #8b5cf6;
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    }
+
+    button.newline:hover {
+      background: #7c3aed;
+      box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+    }
+
+    button.keyboard {
+      background: #6366f1;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    button.keyboard:hover {
+      background: #4f46e5;
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    }
+
+    button.format-toggle {
+      background: #ec4899;
+      box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
+    }
+
+    button.format-toggle:hover {
+      background: #be185d;
+      box-shadow: 0 6px 20px rgba(236, 72, 153, 0.4);
+    }
+
+    .chem-keyboard {
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 15px;
+      margin: 15px 0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .keyboard-section {
+      margin-bottom: 20px;
+    }
+
+    .keyboard-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+      direction: ltr;
+      margin-bottom: 8px;
+    }
+
+    .key-btn {
+      min-width: 45px;
+      height: 36px;
+      padding: 6px 10px;
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #334155;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .key-btn:hover {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+    }
+
+    .key-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+    }
+
+    .key-btn.subscript {
+      background: #ecfdf5;
+      border-color: #10b981;
+      color: #047857;
+    }
+
+    .key-btn.subscript:hover {
+      background: #10b981;
+      color: white;
+    }
+
+    .key-btn.superscript {
+      background: #fef3c7;
+      border-color: #f59e0b;
+      color: #d97706;
+    }
+
+    .key-btn.superscript:hover {
+      background: #f59e0b;
+      color: white;
+    }
+
+    .key-btn.charge {
+      background: #fce7f3;
+      border-color: #ec4899;
+      color: #be185d;
+    }
+
+    .key-btn.charge:hover {
+      background: #ec4899;
+      color: white;
+    }
+
+    .key-btn.formula {
+      background: #e0f2fe;
+      border-color: #0891b2;
+      color: #0e7490;
+      min-width: 60px;
+    }
+
+    .key-btn.formula:hover {
+      background: #0891b2;
+      color: white;
+    }
+
+    .preview {
+      border-radius: 15px;
+      padding: 5px;
+      min-height: 100px;
+      background: #ffffff;
+      font-size: clamp(20px, 3vw, 22px);
+      line-height: 1.4;
+      direction: rtl;
+      text-align: right;
+      font-family: calibri;
+      font-weight: 500;
+      width: 620px;
+      max-width: 90%;
+      margin: 0 auto;
+      position: relative;
+      white-space: pre-wrap;
+    }
+
+    .preview-main-content {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      direction: ltr;
+      justify-content: flex-end;
+      margin: 0;
+      padding: 0;
+    }
+
+    .preview-text {
+      flex: 1;
+      direction: rtl;
+      text-align: right;
+      white-space: pre-wrap;
+      margin: 0;
+      padding: 0;
+      line-height: 1.4;
+    }
+
+    .source-image-container {
+      flex-shrink: 0;
+      text-align: center;
+      width: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    .source-image {
+      width: 120px;
+      height: auto;
+      max-height: 62px;
+      object-fit: contain;
+      display: block;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      margin-bottom: 0;
+    }
+
+    .source-image-placeholder {
+      width: 120px;
+      height: 62px;
+      background: #f59e0b;
+      border: none;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+      color: white;
+    }
+
+    .source-image-label {
+      font-size: 20px;
+      color: #374151;
+      font-weight: bold;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      margin-top: 0;
+      line-height: 1;
+      width: 100%;
+      word-wrap: break-word;
+      position: relative;
+      top: -2px;
+      padding-top: 10px;
+    }
+
+    .source-text {
+      display: inline;
+      font-size: clamp(18px, 3vw, 20px);
+      font-weight: bold;
+      direction: rtl;
+      margin-left: 10px;
+    }
+
+    .source-black { color: #000; font-weight: bold; }
+    .source-red { color: #dc2626; font-weight: bold; }
+    .source-dark-blue { color: #1e3a8a; font-weight: bold; }
+
+    .preview .katex {
+      direction: ltr !important;
+      display: inline-block;
+      margin: 0 5px;
+    }
+
+    .preview .katex-wrapper.equation-normal .katex {
+      font-size: 18px !important;
+    }
+
+    .preview .katex-wrapper.equation-normal .katex * {
+      font-size: 18px !important;
+    }
+
+    .preview .katex-wrapper.equation-fraction .katex {
+      font-size: inherit;
+    }
+
+    .preview .katex-display {
+      text-align: center !important;
+      margin: 15px 0;
+    }
+
+    .preview .options {
+      margin: 2px 0;
+      padding: 2px 0;
+      direction: rtl;
+      text-align: right;
+    }
+
+    .preview .options.inline {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      direction: rtl;
+      justify-content: flex-start;
+    }
+
+    .preview .options.inline.with-source-image {
+      padding-right: 90px;
+    }
+
+    .preview .options.two-lines {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      direction: rtl;
+    }
+
+    .preview .options.four-lines .option {
+      margin-bottom: 6px;
+    }
+
+    .preview .option {
+      font-size: clamp(19px, 2.5vw, 21px);
+      color: #333;
+      padding: 1px 0;
+      direction: rtl;
+      text-align: right;
+      font-family: calibri;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      unicode-bidi: bidi-override;
+    }
+
+    .preview .option-label {
+      direction: ltr;
+      unicode-bidi: bidi-override;
+      text-align: left;
+      font-weight: normal;
+      margin-right: 10px;
+      color: #333;
+      flex-shrink: 0;
+    }
+
+    .preview .option-content {
+      flex: 1;
+      direction: rtl;
+      text-align: right;
+    }
+
+    .preview .option.option-normal .katex {
+      font-size: 18px !important;
+    }
+
+    .preview .option.option-normal .katex * {
+      font-size: 18px !important;
+    }
+
+    .preview .option.option-fraction .katex {
+      font-size: inherit;
+    }
+
+    .preview .option .katex {
+      direction: ltr !important;
+      display: inline-block;
+      margin: 0;
+    }
+
+    .preview .bold-text {
+      font-weight: bold;
+    }
+
+    .preview .red-text {
+      color: #dc2626;
+    }
+
+    .preview .underline-text {
+      text-decoration: underline;
+    }
+
+    .error {
+      background: #fee2e2;
+      color: #dc2626;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      display: inline-block;
+      direction: ltr;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+      
+      .container {
+        padding: 20px;
+      }
+      
+      .add-equation-controls {
+        flex-direction: column;
+        gap: 8px;
+      }
+      
+      .options-controls, .source-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+      
+      .options-layout, .color-controls {
+        justify-content: space-around;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      
+      .source-type-options {
+        justify-content: space-around;
+        gap: 10px;
+      }
+      
+      .equation-group {
+        padding: 12px;
+      }
+      
+      .options-section, .source-section {
+        padding: 15px;
+      }
+      
+      .chem-keyboard {
+        padding: 12px;
+      }
+      
+      .keyboard-row {
+        gap: 4px;
+        margin-bottom: 6px;
+      }
+      
+      .key-btn {
+        min-width: 38px;
+        height: 32px;
+        font-size: 12px;
+        padding: 4px 8px;
+      }
+      
+      .key-btn.formula {
+        min-width: 50px;
+      }
+      
+      .preview {
+        width: 95% !important;
+        max-width: none !important;
+        padding: 20px !important;
+        font-size: 18px !important;
+        line-height: 1.4 !important;
+      }
+      
+      .source-image-container {
+        width: 125px;
+      }
+      
+      .source-image {
+        width: 125px;
+        max-height: 55px;
+      }
+      
+      .source-image-placeholder {
+        width: 125px;
+        height: 55px;
+        font-size: 13px;
+      }
+      
+      .source-image-label {
+        font-size: 14px;
+        margin-top: 5px;
+      }
+      
+      .preview .katex {
+        font-size: 16px !important;
+        margin: 0 3px !important;
+      }
+      
+      .preview .options.inline {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+      }
+      
+      .preview .options.two-lines {
+        grid-template-columns: 1fr !important;
+        gap: 6px !important;
+      }
+      
+      .preview .option {
+        font-size: 16px !important;
+        padding: 2px 0 !important;
+      }
+      
+      .buttons {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .formatting-buttons {
+        gap: 3px;
+        margin-bottom: 5px;
+      }
+      
+      .format-btn {
+        min-width: 32px;
+        height: 28px;
+        font-size: 11px;
+        padding: 3px 6px;
+      }
+      
+      .chem-keyboard {
+        padding: 10px;
+      }
+      
+      .keyboard-row {
+        gap: 3px;
+        margin-bottom: 5px;
+      }
+      
+      .key-btn {
+        min-width: 32px;
+        height: 28px;
+        font-size: 11px;
+        padding: 3px 6px;
+      }
+      
+      .key-btn.formula {
+        min-width: 45px;
+      }
+      
+      .source-type-options {
+        flex-direction: column;
+        gap: 8px;
+      }
+      
+      .options-layout, .color-controls {
+        flex-direction: column;
+        gap: 8px;
+      }
+      
+      .buttons {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <label>اكتب السؤال:</label>
+  <textarea id="textInput" placeholder="اكتب السؤال هنا... يمكنك إضافة أماكن للمعادلات باستخدام الأزرار أدناه"></textarea>
+
+  <div class="text-formatting">
+    <button class="format-toggle" onclick="toggleFormatting()">تنسيق النص</button>
+    <div class="formatting-content" id="formattingContent">
+      <div class="formatting-buttons">
+        <button class="format-btn bold" onclick="formatText('bold')">عريض</button>
+        <button class="format-btn red" onclick="formatText('red')">أحمر</button>
+        <button class="format-btn underline" onclick="formatText('underline')">تحته خط</button>
+      </div>
+      <small style="color: #666; text-align: center; display: block;">حدد النص المطلوب تنسيقه ثم اضغط على أحد الأزرار</small>
+    </div>
+  </div>
+
+  <div class="add-equation-controls">
+    <button class="newline" onclick="addNewLine()">إضافة سطر جديد</button>
+    <button class="add" onclick="addNewEquation()">إضافة معادلة جديدة</button>
+    <button class="keyboard" onclick="toggleChemKeyboard()">لوحة الكيمياء</button>
+  </div>
+
+  <div id="equationsContainer" class="equations"></div>
+
+  <div id="chemKeyboard" class="chem-keyboard" style="display: none;">
+    <div class="keyboard-section">
+      <div class="keyboard-row">
+        <button class="key-btn" onclick="insertChemSymbol('H')">H</button>
+        <button class="key-btn" onclick="insertChemSymbol('O')">O</button>
+        <button class="key-btn" onclick="insertChemSymbol('C')">C</button>
+        <button class="key-btn" onclick="insertChemSymbol('N')">N</button>
+        <button class="key-btn" onclick="insertChemSymbol('S')">S</button>
+        <button class="key-btn" onclick="insertChemSymbol('P')">P</button>
+        <button class="key-btn" onclick="insertChemSymbol('Cl')">Cl</button>
+        <button class="key-btn" onclick="insertChemSymbol('Na')">Na</button>
+        <button class="key-btn" onclick="insertChemSymbol('Ca')">Ca</button>
+        <button class="key-btn" onclick="insertChemSymbol('K')">K</button>
+      </div>
+      <div class="keyboard-row">
+        <button class="key-btn" onclick="insertChemSymbol('Mg')">Mg</button>
+        <button class="key-btn" onclick="insertChemSymbol('Fe')">Fe</button>
+        <button class="key-btn" onclick="insertChemSymbol('Al')">Al</button>
+        <button class="key-btn" onclick="insertChemSymbol('Zn')">Zn</button>
+        <button class="key-btn" onclick="insertChemSymbol('Cu')">Cu</button>
+        <button class="key-btn" onclick="insertChemSymbol('Ag')">Ag</button>
+        <button class="key-btn" onclick="insertChemSymbol('Au')">Au</button>
+        <button class="key-btn" onclick="insertChemSymbol('Pb')">Pb</button>
+        <button class="key-btn" onclick="insertChemSymbol('Br')">Br</button>
+        <button class="key-btn" onclick="insertChemSymbol('I')">I</button>
+      </div>
+    </div>
+
+    <div class="keyboard-section">
+      <div class="keyboard-row">
+        <button class="key-btn subscript" onclick="insertChemSymbol('₀')">₀</button>
+        <button class="key-btn subscript" onclick="insertChemSymbol('₁')">₁</button>
+        <button class="key-btn subscript" onclick="insertChemSymbol('₂')">₂</button>
+        <button class="key-btn subscript" onclick="insertChemSymbol('₃')">₃</button>
+        <button class="key-btn subscript" onclick="insertChemSymbol('₄')">₄</button>
+        <button class="key-btn subscript" onclick="insertChemSymbol('₅')">₅</button>
+        <button class="key-btn subscript" onclick="insertChemSymbol('₆')">₆</button>
+        <button class="key-btn subscript" onclick="insertChemSymbol('₇')">₇</button>
+        <button class="key-btn subscript" onclick="insertChemSymbol('₈')">₈</button>
+        <button class="key-btn subscript" onclick="insertChemSymbol('₉')">₉</button>
+      </div>
+    </div>
+
+    <div class="keyboard-section">
+      <div class="keyboard-row">
+        <button class="key-btn superscript" onclick="insertChemSymbol('⁰')">⁰</button>
+        <button class="key-btn superscript" onclick="insertChemSymbol('¹')">¹</button>
+        <button class="key-btn superscript" onclick="insertChemSymbol('²')">²</button>
+        <button class="key-btn superscript" onclick="insertChemSymbol('³')">³</button>
+        <button class="key-btn superscript" onclick="insertChemSymbol('⁴')">⁴</button>
+        <button class="key-btn superscript" onclick="insertChemSymbol('⁵')">⁵</button>
+        <button class="key-btn superscript" onclick="insertChemSymbol('⁶')">⁶</button>
+        <button class="key-btn superscript" onclick="insertChemSymbol('⁷')">⁷</button>
+        <button class="key-btn superscript" onclick="insertChemSymbol('⁸')">⁸</button>
+        <button class="key-btn superscript" onclick="insertChemSymbol('⁹')">⁹</button>
+      </div>
+      <div class="keyboard-row">
+        <button class="key-btn charge" onclick="insertChemSymbol('⁺')">⁺</button>
+        <button class="key-btn charge" onclick="insertChemSymbol('⁻')">⁻</button>
+        <button class="key-btn charge" onclick="insertChemSymbol('²⁺')">²⁺</button>
+        <button class="key-btn charge" onclick="insertChemSymbol('³⁺')">³⁺</button>
+        <button class="key-btn charge" onclick="insertChemSymbol('²⁻')">²⁻</button>
+        <button class="key-btn charge" onclick="insertChemSymbol('³⁻')">³⁻</button>
+      </div>
+    </div>
+
+    <div class="keyboard-section">
+      <div class="keyboard-row">
+        <button class="key-btn" onclick="insertChemSymbol('→')">→</button>
+        <button class="key-btn" onclick="insertChemSymbol('⇌')">⇌</button>
+        <button class="key-btn" onclick="insertChemSymbol('Δ')">Δ</button>
+        <button class="key-btn" onclick="insertChemSymbol('(')">( )</button>
+        <button class="key-btn" onclick="insertChemSymbol('[')">[ ]</button>
+        <button class="key-btn" onclick="insertChemSymbol('+')">+</button>
+        <button class="key-btn" onclick="insertChemSymbol('=')"> = </button>
+        <button class="key-btn" onclick="insertChemSymbol('·')"> · </button>
+      </div>
+    </div>
+
+    <div class="keyboard-section">
+      <div class="keyboard-row">
+        <button class="key-btn formula" onclick="insertChemSymbol('H₂O')">H₂O</button>
+        <button class="key-btn formula" onclick="insertChemSymbol('H₃O⁺')">H₃O⁺</button>
+        <button class="key-btn formula" onclick="insertChemSymbol('OH⁻')">OH⁻</button>
+        <button class="key-btn formula" onclick="insertChemSymbol('CO₂')">CO₂</button>
+        <button class="key-btn formula" onclick="insertChemSymbol('NH₃')">NH₃</button>
+        <button class="key-btn formula" onclick="insertChemSymbol('SO₄²⁻')">SO₄²⁻</button>
+        <button class="key-btn formula" onclick="insertChemSymbol('NO₃⁻')">NO₃⁻</button>
+        <button class="key-btn formula" onclick="insertChemSymbol('PO₄³⁻')">PO₄³⁻</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="source-section">
+    <label>مصدر السؤال:</label>
+    <div class="source-controls">
+      <button class="source" onclick="toggleSourceSection()">إضافة مصدر</button>
+      <div class="color-controls">
+        <label>لون النص:</label>
+        <label><input type="radio" name="sourceTextColor" value="black" checked> أسود غامق</label>
+        <label><input type="radio" name="sourceTextColor" value="red"> أحمر غامق</label>
+        <label><input type="radio" name="sourceTextColor" value="dark-blue"> أزرق غامق</label>
+      </div>
+    </div>
+    
+    <div id="sourceContainer" class="source-container" style="display: none;">
+      <input type="text" id="sourceText" class="source-input" placeholder="أدخل المصدر (مثال: وزارة التربية 2008 - اردني - سوري - اجنبي)">
+      
+      <div class="source-image-controls">
+        <label>نوع المصدر:</label>
+        <div class="source-type-options">
+          <label><input type="radio" name="sourceType" value="none" checked> بدون صورة</label>
+          <label><input type="radio" name="sourceType" value="naseeha"> نصيحة</label>
+          <label><input type="radio" name="sourceType" value="book"> كتاب</label>
+          <label><input type="radio" name="sourceType" value="university"> جامعة</label>
+          <label><input type="radio" name="sourceType" value="foreign"> أجنبي</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="options-section">
+    <label>خيارات السؤال:</label>
+    <div class="options-controls">
+      <button class="options" onclick="toggleOptionsSection()">إضافة خيارات</button>
+      <div class="options-layout">
+        <label>تخطيط الخيارات:</label>
+        <label><input type="radio" name="optionsLayout" value="inline" checked> نفس السطر</label>
+        <label><input type="radio" name="optionsLayout" value="two-lines"> سطرين</label>
+        <label><input type="radio" name="optionsLayout" value="four-lines"> أربعة أسطر</label>
+      </div>
+    </div>
+    
+    <div id="optionsContainer" class="options-container" style="display: none;">
+      <div class="option-group">
+        <div class="option-type-control">
+          <input type="checkbox" id="optionAFractionType">
+          <label for="optionAFractionType" style="cursor: pointer;">كسري</label>
+        </div>
+        <input type="text" id="optionA" class="option-input" placeholder="أدخل نص أو معادلة للخيار أ (مثال: 12 لتر أو x^2+3x+2)">
+      </div>
+      
+      <div class="option-group">
+        <div class="option-type-control">
+          <input type="checkbox" id="optionBFractionType">
+          <label for="optionBFractionType" style="cursor: pointer;">كسري</label>
+        </div>
+        <input type="text" id="optionB" class="option-input" placeholder="أدخل نص أو معادلة للخيار ب (مثال: 15 متر أو (x+1)(x+2))">
+      </div>
+      
+      <div class="option-group">
+        <div class="option-type-control">
+          <input type="checkbox" id="optionCFractionType">
+          <label for="optionCFractionType" style="cursor: pointer;">كسري</label>
+        </div>
+        <input type="text" id="optionC" class="option-input" placeholder="أدخل نص أو معادلة للخيار ج (مثال: صحيح أو sin(x)+cos(x))">
+      </div>
+      
+      <div class="option-group">
+        <div class="option-type-control">
+          <input type="checkbox" id="optionDFractionType">
+          <label for="optionDFractionType" style="cursor: pointer;">كسري</label>
+        </div>
+        <input type="text" id="optionD" class="option-input" placeholder="أدخل نص أو معادلة للخيار د (مثال: خطأ أو ln(x)+e^x)">
+      </div>
+    </div>
+  </div>
+
+  <div class="buttons">
+    <button onclick="displayEquations()">عرض المعادلات</button>
+    <button class="clear" onclick="clearAll()">مسح الكل</button>
+    <button class="download" onclick="downloadImage()">تحميل صورة</button>
+  </div>
+
+  <div class="preview" id="preview">
+    <p style="color: #888; text-align: center;">النتيجة ستظهر هنا بعد إدخال النص والمعادلات...</p>
+  </div>
+</div>
+
+<script>
+function parseMathExpression(expr) {
+  try {
+    const parsed = math.parse(expr);
+    let latex = parsed.toTex({parenthesis: 'keep'});
+    return latex;
+  } catch (error) {
+    return expr;
+  }
+}
+
+let optionsVisible = false;
+let sourceVisible = false;
+let equationCounter = 0;
+let chemKeyboardVisible = false;
+let activeInput = null;
+let formattingVisible = false;
+
+function toggleFormatting() {
+  const formattingContent = document.getElementById("formattingContent");
+  formattingVisible = !formattingVisible;
+  
+  if (formattingVisible) {
+    formattingContent.classList.add("active");
+  } else {
+    formattingContent.classList.remove("active");
+  }
+}
+
+function toggleChemKeyboard() {
+  const keyboard = document.getElementById("chemKeyboard");
+  chemKeyboardVisible = !chemKeyboardVisible;
+  keyboard.style.display = chemKeyboardVisible ? "block" : "none";
+}
+
+function insertChemSymbol(symbol) {
+  const textarea = document.getElementById("textInput");
+  
+  if (activeInput && (activeInput.classList.contains('equation-input') || activeInput.classList.contains('option-input'))) {
+    const cursorPos = activeInput.selectionStart;
+    const textBefore = activeInput.value.substring(0, cursorPos);
+    const textAfter = activeInput.value.substring(cursorPos);
+    
+    activeInput.value = textBefore + symbol + textAfter;
+    activeInput.focus();
+    activeInput.setSelectionRange(cursorPos + symbol.length, cursorPos + symbol.length);
+  } else {
+    const cursorPos = textarea.selectionStart;
+    const textBefore = textarea.value.substring(0, cursorPos);
+    const textAfter = textarea.value.substring(cursorPos);
+    
+    textarea.value = textBefore + symbol + textAfter;
+    textarea.focus();
+    textarea.setSelectionRange(cursorPos + symbol.length, cursorPos + symbol.length);
+  }
+}
+
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('equation-input') || 
+      e.target.classList.contains('option-input') || 
+      e.target.id === 'textInput') {
+    activeInput = e.target;
+  }
+});
+
+function addNewLine() {
+  const textarea = document.getElementById("textInput");
+  const cursorPos = textarea.selectionStart;
+  const textBefore = textarea.value.substring(0, cursorPos);
+  const textAfter = textarea.value.substring(cursorPos);
+  
+  textarea.value = textBefore + '\n' + textAfter;
+  textarea.focus();
+  textarea.setSelectionRange(cursorPos + 1, cursorPos + 1);
+  
+  if (textarea.value.trim()) {
+    displayEquations();
+  }
+}
+
+function formatText(type) {
+  const textarea = document.getElementById("textInput");
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  
+  if (start === end) {
+    alert("يرجى تحديد النص المطلوب تنسيقه أولاً");
+    return;
+  }
+  
+  const selectedText = textarea.value.substring(start, end);
+  const textBefore = textarea.value.substring(0, start);
+  const textAfter = textarea.value.substring(end);
+  
+  let formattedText;
+  switch(type) {
+    case 'bold':
+      formattedText = `[[عريض:${selectedText}]]`;
+      break;
+    case 'red':
+      formattedText = `[[أحمر:${selectedText}]]`;
+      break;
+    case 'underline':
+      formattedText = `[[تحته_خط:${selectedText}]]`;
+      break;
+    default:
+      formattedText = selectedText;
+  }
+  
+  textarea.value = textBefore + formattedText + textAfter;
+  textarea.focus();
+  textarea.setSelectionRange(start, start + formattedText.length);
+}
+
+function addNewEquation() {
+  equationCounter++;
+  const container = document.getElementById("equationsContainer");
+  
+  const group = document.createElement("div");
+  group.className = "equation-group";
+  group.id = "equationGroup" + equationCounter;
+  
+  const removeBtn = document.createElement("button");
+  removeBtn.className = "remove-equation";
+  removeBtn.innerHTML = "×";
+  removeBtn.onclick = () => removeEquation(equationCounter);
+  
+  const label = document.createElement("div");
+  label.className = "equation-label";
+  label.textContent = `المعادلة رقم ${equationCounter}:`;
+  
+  const typeControl = document.createElement("div");
+  typeControl.className = "equation-type-control";
+  
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.id = "fractionType" + equationCounter;
+  checkbox.checked = false;
+  
+  const checkboxLabel = document.createElement("label");
+  checkboxLabel.htmlFor = "fractionType" + equationCounter;
+  checkboxLabel.textContent = "معادلة كسرية";
+  checkboxLabel.style.cursor = "pointer";
+  
+  typeControl.appendChild(checkbox);
+  typeControl.appendChild(checkboxLabel);
+  
+  const input = document.createElement("input");
+  input.type = "text";
+  input.id = "equation" + equationCounter;
+  input.className = "equation-input";
+  input.placeholder = `أدخل المعادلة (مثال: (x^2+3x+2)/(x+1) أو sin(x) + cos(y))`;
+  input.dir = "ltr";
+  
+  group.appendChild(removeBtn);
+  group.appendChild(label);
+  group.appendChild(typeControl);
+  group.appendChild(input);
+  container.appendChild(group);
+  
+  const textarea = document.getElementById("textInput");
+  const cursorPos = textarea.selectionStart;
+  const textBefore = textarea.value.substring(0, cursorPos);
+  const textAfter = textarea.value.substring(cursorPos);
+  
+  textarea.value = textBefore + ` [[معادلة${equationCounter}]] ` + textAfter;
+  textarea.focus();
+  textarea.setSelectionRange(cursorPos + ` [[معادلة${equationCounter}]] `.length, cursorPos + ` [[معادلة${equationCounter}]] `.length);
+}
+
+function removeEquation(id) {
+  const group = document.getElementById("equationGroup" + id);
+  if (group) {
+    group.remove();
+  }
+}
+
+function toggleOptionsSection() {
+  const container = document.getElementById("optionsContainer");
+  optionsVisible = !optionsVisible;
+  container.style.display = optionsVisible ? "block" : "none";
+}
+
+function toggleSourceSection() {
+  const container = document.getElementById("sourceContainer");
+  sourceVisible = !sourceVisible;
+  container.style.display = sourceVisible ? "block" : "none";
+}
+
+function getSourceHTML() {
+  const sourceText = document.getElementById("sourceText").value.trim();
+  const sourceType = document.querySelector('input[name="sourceType"]:checked').value;
+  const textColor = document.querySelector('input[name="sourceTextColor"]:checked').value;
+  
+  let sourceImageHTML = "";
+  let sourceTextHTML = "";
+  
+  if (sourceType !== 'none') {
+    let imageURL = '';
+    switch(sourceType) {
+      case 'naseeha':
+        imageURL = 'https://naseehaexamhub.online/ImageGen/images/Naseeha.png';
+        break;
+      case 'foreign':
+        imageURL = 'https://naseehaexamhub.online/ImageGen/images/foreign.png';
+        break;
+      case 'university':
+        imageURL = 'https://naseehaexamhub.online/ImageGen/images/university.png';
+        break;
+      case 'book':
+        imageURL = 'https://naseehaexamhub.online/ImageGen/images/book.png';
+        break;
+    }
+    
+    const labelHTML = sourceText ? `<div class="source-image-label">${sourceText}</div>` : '';
+    
+    sourceImageHTML = `
+      <div class="source-image-container">
+        <img src="${imageURL}" alt="source" class="source-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <div class="source-image-placeholder" style="display: none;">صورة</div>
+        ${labelHTML}
+      </div>
+    `;
+  }
+  
+  return { sourceImageHTML, sourceTextHTML, hasSourceImage: sourceType !== 'none' };
+}
+
+function getOptionsHTML() {
+  const optionA = document.getElementById("optionA").value.trim();
+  const optionB = document.getElementById("optionB").value.trim();
+  const optionC = document.getElementById("optionC").value.trim();
+  const optionD = document.getElementById("optionD").value.trim();
+  
+  if (!optionA && !optionB && !optionC && !optionD) {
+    return "";
+  }
+  
+  const layout = document.querySelector('input[name="optionsLayout"]:checked').value;
+  const sourceData = getSourceHTML();
+  
+  let optionsHTML = `<div class="options ${layout}${sourceData.hasSourceImage && layout === 'inline' ? ' with-source-image' : ''}">`;
+  
+  const labels = ['(أ', '(ب', '(ج', '(د'];
+  const options = [optionA, optionB, optionC, optionD];
+  const optionIds = ['optionAFractionType', 'optionBFractionType', 'optionCFractionType', 'optionDFractionType'];
+  
+  options.forEach((option, index) => {
+    if (option) {
+      const isFraction = document.getElementById(optionIds[index])?.checked || false;
+      const optionClass = isFraction ? 'option-fraction' : 'option-normal';
+      
+      let renderedContent = option;
+      
+      if (isFraction || option.includes('^') || option.includes('/') || option.includes('sqrt') || option.includes('sin') || option.includes('cos') || option.includes('tan') || option.includes('log') || option.includes('ln')) {
+        try {
+          let latex = parseMathExpression(option);
+          latex = latex.replace(/:=/g, '=');
+          
+          renderedContent = katex.renderToString(latex, {
+            throwOnError: false,
+            displayMode: false
+          });
+        } catch (error) {
+          renderedContent = option;
+        }
+      }
+      
+      optionsHTML += `<div class="option ${optionClass}">
+        <span class="option-label">${labels[index]}</span>
+        <span class="option-content">${renderedContent}</span>
+      </div>`;
+    }
+  });
+  
+  optionsHTML += '</div>';
+  return optionsHTML;
+}
+
+function processFormattedText(text) {
+  text = text.replace(/\[\[عريض:(.*?)\]\]/g, '<span class="bold-text">$1</span>');
+  text = text.replace(/\[\[أحمر:(.*?)\]\]/g, '<span class="red-text">$1</span>');
+  text = text.replace(/\[\[تحته_خط:(.*?)\]\]/g, '<span class="underline-text">$1</span>');
+  return text;
+}
+
+function displayEquations() {
+  let text = document.getElementById("textInput").value;
+  const equations = document.querySelectorAll('.equation-input');
+
+  if (!text.trim()) {
+    document.getElementById("preview").innerHTML = '<p style="color: #888; text-align: center;">النتيجة ستظهر هنا بعد إدخال النص والمعادلات...</p>';
+    return;
+  }
+
+  text = processFormattedText(text);
+  text = text.trim();
+
+  const sourceData = getSourceHTML();
+  let finalText = '';
+
+  if (sourceData.sourceImageHTML || sourceData.sourceTextHTML) {
+    finalText = `<div class="preview-main-content"><div class="preview-text">${sourceData.sourceTextHTML}${text}</div>${sourceData.sourceImageHTML}</div>`;
+  } else {
+    finalText = text;
+  }
+
+  equations.forEach((equationInput, index) => {
+    const expr = equationInput.value.trim();
+    if (!expr) return;
+    
+    const equationNumber = index + 1;
+    const isFraction = document.getElementById("fractionType" + equationNumber)?.checked || false;
+    
+    try {
+      const parsed = math.parse(expr);
+      let latex = parsed.toTex({parenthesis: 'keep'});
+      
+      latex = latex.replace(/:=/g, '=');
+      
+      const renderedEquation = katex.renderToString(latex, {
+        throwOnError: false,
+        displayMode: false
+      });
+      
+      const equationClass = isFraction ? 'equation-fraction' : 'equation-normal';
+      
+      finalText = finalText.replace(`[[معادلة${equationNumber}]]`, 
+        `<span class="katex-wrapper ${equationClass}" style="direction: ltr; display: inline-block; margin: 0 5px;">${renderedEquation}</span>`
+      );
+    } catch (error) {
+      console.error("خطأ في المعادلة " + equationNumber + ":", error);
+      finalText = finalText.replace(`[[معادلة${equationNumber}]]`, 
+        `<span class="error">خطأ في المعادلة ${equationNumber}</span>`
+      );
+    }
+  });
+
+  const optionsHTML = getOptionsHTML();
+  if (optionsHTML) {
+    finalText += '<br>' + optionsHTML;
+  }
+
+  const preview = document.getElementById("preview");
+  preview.innerHTML = finalText;
+  
+  const katexElements = preview.querySelectorAll('.katex');
+  katexElements.forEach(eq => {
+    eq.style.direction = 'ltr';
+    eq.style.display = 'inline-block';
+  });
+}
+
+function clearAll() {
+  if (confirm("هل أنت متأكد من مسح جميع البيانات؟")) {
+    document.getElementById("textInput").value = "";
+    document.getElementById("equationsContainer").innerHTML = "";
+    
+    const optionIds = ['optionA', 'optionB', 'optionC', 'optionD'];
+    optionIds.forEach(id => {
+      const element = document.getElementById(id);
+      if (element) element.value = "";
+    });
+    
+    const sourceTextEl = document.getElementById("sourceText");
+    if (sourceTextEl) sourceTextEl.value = "";
+    
+    document.getElementById("optionsContainer").style.display = "none";
+    document.getElementById("sourceContainer").style.display = "none";
+    document.getElementById("chemKeyboard").style.display = "none";
+    
+    const formattingContent = document.getElementById("formattingContent");
+    formattingContent.classList.remove("active");
+    
+    const checkboxIds = ['optionAFractionType', 'optionBFractionType', 'optionCFractionType', 'optionDFractionType'];
+    checkboxIds.forEach(id => {
+      const element = document.getElementById(id);
+      if (element) element.checked = false;
+    });
+    
+    const noneRadio = document.querySelector('input[name="sourceType"][value="none"]');
+    if (noneRadio) noneRadio.checked = true;
+    
+    const blackColorRadio = document.querySelector('input[name="sourceTextColor"][value="black"]');
+    if (blackColorRadio) blackColorRadio.checked = true;
+    
+    const inlineLayoutRadio = document.querySelector('input[name="optionsLayout"][value="inline"]');
+    if (inlineLayoutRadio) inlineLayoutRadio.checked = true;
+    
+    optionsVisible = false;
+    sourceVisible = false;
+    chemKeyboardVisible = false;
+    formattingVisible = false;
+    equationCounter = 0;
+    activeInput = null;
+    document.getElementById("preview").innerHTML = '<p style="color: #888; text-align: center;">النتيجة ستظهر هنا بعد إدخال النص والمعادلات...</p>';
+  }
+}
+
+function downloadImage() {
+  const preview = document.getElementById("preview");
+  if (!preview.innerHTML.trim() || preview.innerHTML.includes("النتيجة ستظهر هنا")) {
+    alert("يرجى إنشاء المحتوى أولاً قبل التحميل");
+    return;
+  }
+  
+  setTimeout(() => {
+    html2canvas(preview, {
+      scale: 3,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      width: preview.offsetWidth,
+      height: preview.offsetHeight,
+      scrollX: 0,
+      scrollY: 0,
+      foreignObjectRendering: false,
+      logging: false
+    }).then(canvas => {
+      const link = document.createElement("a");
+      link.download = "سؤال_مع_معادلات_" + new Date().getTime() + ".png";
+      link.href = canvas.toDataURL("image/png", 1.0);
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }).catch(error => {
+      console.error("خطأ في تحميل الصورة:", error);
+      alert("حدث خطأ أثناء تحميل الصورة");
+    });
+  }, 500);
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.ctrlKey && e.key === 'Enter') {
+    displayEquations();
+  }
+});
+</script>
+
+</body>
+</html>

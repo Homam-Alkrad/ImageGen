@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>محرر نصوص مع معادلات</title>
+  
+  <!-- External Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjs@11.10.0/lib/browser/math.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="main.css">
+</head>
+<body>
+
+<div class="container">
+  <label>اكتب السؤال:</label>
+  <textarea id="textInput" placeholder="اكتب السؤال هنا... يمكنك إضافة أماكن للمعادلات باستخدام الأزرار أدناه"></textarea>
+
+  <div class="add-equation-controls">
+    <button class="newline" onclick="addNewLine()">إضافة سطر جديد</button>
+    <button class="add" onclick="addNewEquation()">إضافة معادلة جديدة</button>
+    <button class="keyboard" onclick="toggleKeyboard()">لوحة المفاتيح الرياضية</button>
+  </div>
+
+  <div id="equationsContainer" class="equations"></div>
+
+  <div id="mathKeyboard" class="math-keyboard" style="display: none;">
+    <div class="keyboard-row">
+      <button class="key-btn" onclick="insertSymbol('0')">0</button>
+      <button class="key-btn" onclick="insertSymbol('1')">1</button>
+      <button class="key-btn" onclick="insertSymbol('2')">2</button>
+      <button class="key-btn" onclick="insertSymbol('3')">3</button>
+      <button class="key-btn" onclick="insertSymbol('4')">4</button>
+      <button class="key-btn" onclick="insertSymbol('5')">5</button>
+      <button class="key-btn" onclick="insertSymbol('6')">6</button>
+      <button class="key-btn" onclick="insertSymbol('7')">7</button>
+      <button class="key-btn" onclick="insertSymbol('8')">8</button>
+      <button class="key-btn" onclick="insertSymbol('9')">9</button>
+    </div>
+    
+    <div class="keyboard-row">
+      <button class="key-btn" onclick="insertSymbol('+')">+</button>
+      <button class="key-btn" onclick="insertSymbol('-')">-</button>
+      <button class="key-btn" onclick="insertSymbol('*')">×</button>
+      <button class="key-btn" onclick="insertFraction()">÷</button>
+      <button class="key-btn" onclick="insertSymbol('(')">(</button>
+      <button class="key-btn" onclick="insertSymbol(')')">)</button>
+      <button class="key-btn" onclick="insertSymbol('=')">=</button>
+      <button class="key-btn" onclick="insertSymbol('sqrt()')">√</button>
+      <button class="key-btn" onclick="insertSymbol('pi')">π</button>
+    </div>
+    
+    <div class="keyboard-row">
+      <button class="key-btn" onclick="insertSymbol('^2')">²</button>
+      <button class="key-btn" onclick="insertSymbol('^3')">³</button>
+      <button class="key-btn" onclick="insertSymbol('^4')">⁴</button>
+      <button class="key-btn" onclick="insertSymbol('^5')">⁵</button>
+      <button class="key-btn" onclick="insertSymbol('^6')">⁶</button>
+      <button class="key-btn" onclick="insertSymbol('^7')">⁷</button>
+      <button class="key-btn" onclick="insertSymbol('^8')">⁸</button>
+      <button class="key-btn" onclick="insertSymbol('^9')">⁹</button>
+    </div>
+    
+    <div class="keyboard-row">
+      <button class="key-btn" onclick="insertSymbol('x')">x</button>
+      <button class="key-btn" onclick="insertSymbol('x^2')">x²</button>
+      <button class="key-btn" onclick="insertSymbol('x^3')">x³</button>
+      <button class="key-btn" onclick="insertSymbol('x^4')">x⁴</button>
+      <button class="key-btn" onclick="insertSymbol('x^5')">x⁵</button>
+      <button class="key-btn" onclick="insertSymbol('y')">y</button>
+      <button class="key-btn" onclick="insertSymbol('y^2')">y²</button>
+      <button class="key-btn" onclick="insertSymbol('y^3')">y³</button>
+    </div>
+    
+    <div class="keyboard-row">
+      <button class="key-btn" onclick="insertSymbol('sin()')">sin</button>
+      <button class="key-btn" onclick="insertSymbol('cos()')">cos</button>
+      <button class="key-btn" onclick="insertSymbol('tan()')">tan</button>
+      <button class="key-btn" onclick="insertSymbol('log()')">log</button>
+      <button class="key-btn" onclick="insertSymbol('ln()')">ln</button>
+      <button class="key-btn" onclick="insertSymbol('e')">e</button>
+      <button class="key-btn" onclick="insertSymbol('alpha')">α</button>
+      <button class="key-btn" onclick="insertSymbol('beta')">β</button>
+    </div>
+  </div>
+
+  <div class="source-section">
+    <label>مصدر السؤال:</label>
+    <div class="source-controls">
+      <button class="source" onclick="toggleSourceSection()">إضافة مصدر</button>
+      <div class="color-controls">
+        <label>لون النص:</label>
+        <label><input type="radio" name="sourceTextColor" value="black" checked> أسود غامق</label>
+        <label><input type="radio" name="sourceTextColor" value="red"> أحمر غامق</label>
+        <label><input type="radio" name="sourceTextColor" value="dark-blue"> أزرق غامق</label>
+      </div>
+    </div>
+    
+    <div id="sourceContainer" class="source-container" style="display: none;">
+      <input type="text" id="sourceText" class="source-input" placeholder="أدخل المصدر (مثال: وزارة التربية 2008 - اردني - سوري - اجنبي)">
+      
+      <div class="source-image-controls">
+        <label>نوع المصدر:</label>
+        <div class="source-type-options">
+          <label><input type="radio" name="sourceType" value="none" checked> بدون صورة</label>
+          <label><input type="radio" name="sourceType" value="naseeha"> نصيحة</label>
+          <label><input type="radio" name="sourceType" value="book"> كتاب</label>
+          <label><input type="radio" name="sourceType" value="university"> جامعة</label>
+          <label><input type="radio" name="sourceType" value="foreign"> أجنبي</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="options-section">
+    <label>خيارات السؤال:</label>
+    <div class="options-controls">
+      <button class="options" onclick="toggleOptionsSection()">إضافة خيارات</button>
+      <div class="options-layout">
+        <label>تخطيط الخيارات:</label>
+        <label><input type="radio" name="optionsLayout" value="inline" checked> نفس السطر</label>
+        <label><input type="radio" name="optionsLayout" value="two-lines"> سطرين</label>
+        <label><input type="radio" name="optionsLayout" value="four-lines"> أربعة أسطر</label>
+      </div>
+    </div>
+    
+    <div id="optionsContainer" class="options-container" style="display: none;">
+      <div class="option-group">
+        <div class="option-type-control">
+          <input type="checkbox" id="optionAFractionType">
+          <label for="optionAFractionType" style="cursor: pointer;">كسري</label>
+        </div>
+        <input type="text" id="optionA" class="option-input" placeholder="Enter mathematical expression for option A (e.g., x^2+3x+2)">
+      </div>
+      
+      <div class="option-group">
+        <div class="option-type-control">
+          <input type="checkbox" id="optionBFractionType">
+          <label for="optionBFractionType" style="cursor: pointer;">كسري</label>
+        </div>
+        <input type="text" id="optionB" class="option-input" placeholder="Enter mathematical expression for option B (e.g., (x+1)(x+2))">
+      </div>
+      
+      <div class="option-group">
+        <div class="option-type-control">
+          <input type="checkbox" id="optionCFractionType">
+          <label for="optionCFractionType" style="cursor: pointer;">كسري</label>
+        </div>
+        <input type="text" id="optionC" class="option-input" placeholder="Enter mathematical expression for option C (e.g., sin(x)+cos(x))">
+      </div>
+      
+      <div class="option-group">
+        <div class="option-type-control">
+          <input type="checkbox" id="optionDFractionType">
+          <label for="optionDFractionType" style="cursor: pointer;">كسري</label>
+        </div>
+        <input type="text" id="optionD" class="option-input" placeholder="Enter mathematical expression for option D (e.g., ln(x)+e^x)">
+      </div>
+    </div>
+  </div>
+
+  <div class="buttons">
+    <button onclick="displayEquations()">عرض المعادلات</button>
+    <button class="clear" onclick="clearAll()">مسح الكل</button>
+    <button class="download" onclick="downloadImage()">تحميل صورة</button>
+  </div>
+
+  <div class="preview" id="preview">
+    <p style="color: #888; text-align: center;">النتيجة ستظهر هنا بعد إدخال النص والمعادلات...</p>
+  </div>
+</div>
+
+<div id="downloadContainer" class="download-container download-hidden"></div>
+
+<!-- Custom JavaScript -->
+<script src="design.js"></script>
+
+</body>
+</html>
